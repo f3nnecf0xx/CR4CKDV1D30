@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>動画プレイヤー</title>
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+```
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #0f0f0f;
+        color: #fff;
+    }
+
+    /* ヘッダー */
+    .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        background: #212121;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        z-index: 1000;
+        border-bottom: 1px solid #303030;
+    }
+
+    .logo {
+        font-size: 20px;
+        font-weight: 600;
+        color: #fff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .logo-icon {
+        width: 32px;
+        height: 32px;
+        background: #f00;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+
+    /* サイドバー */
+    .sidebar {
+        position: fixed;
+        top: 56px;
+        left: 0;
+        width: 240px;
+        height: calc(100vh - 56px);
+        background: #212121;
+        overflow-y: auto;
+        border-right: 1px solid #303030;
+        z-index: 900;
+    }
+
+    .sidebar-section {
+        padding: 12px 0;
+        border-bottom: 1px solid #303030;
+    }
+
+    .sidebar-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 24px;
+        cursor: pointer;
+        transition: background 0.2s;
+        font-size: 14px;
+        color: #fff;
+    }
+
+    .sidebar-item:hover {
+        background: #3a3a3a;
+    }
+
+    .sidebar-item.active {
+        background: #3a3a3a;
+        font-weight: 500;
+    }
+
+    .sidebar-item-icon {
+        width: 24px;
+        height: 24px;
+        margin-right: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* メインコンテンツ */
+    .main {
+        margin-left: 240px;
+        margin-top: 56px;
+        padding: 24px;
+    }
+
+    /* ホーム画面 - グリッドレイアウト */
+    .video-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 24px;
+        max-width: 1920px;
+    }
+
+    .video-card {
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .video-card:hover {
+        transform: scale(1.02);
+    }
+
+    .video-card-thumbnail {
+        width: 100%;
+        aspect-ratio: 16/9;
+        background: #303030;
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .video-card-thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .video-card-duration {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 3px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .video-card-info {
+        padding: 12px 0;
+    }
+
+    .video-card-title {
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1.4;
+        margin-bottom: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .video-card-channel {
+        font-size: 12px;
+        color: #aaa;
+        margin-bottom: 2px;
+    }
+
+    .video-card-meta {
+        font-size: 12px;
+        color: #aaa;
+    }
+
+    /* 動画再生画面 */
+    .player-container {
+        display: none;
+        max-width: 1280px;
+    }
+
+    .player-container.active {
+        display: block;
+    }
+
+    .video-player {
+        width: 100%;
+        aspect-ratio: 16/9;
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .video-js {
+        width: 100%;
+        height: 100%;
+    }
+
+    .video-details {
+        padding: 20px 0;
+    }
+
+    .video-title {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        line-height: 1.4;
+    }
+
+    .video-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #aaa;
+        font-size: 14px;
+        margin-bottom: 16px;
+    }
+
+    .video-meta span {
+        display: flex;
+        align-items: center;
+    }
+
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: #3a3a3a;
+        border: none;
+        border-radius: 18px;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        margin-bottom: 16px;
+        transition: background 0.2s;
+    }
+
+    .back-button:hover {
+        background: #4a4a4a;
+    }
+
+    /* 関連動画 */
+    .related-videos {
+        margin-top: 24px;
+    }
+
+    .related-videos h3 {
+        font-size: 16px;
+        font-weight: 500;
+        margin-bottom: 16px;
+    }
+
+    .related-video-item {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 8px;
+        transition: background 0.2s;
+    }
+
+    .related-video-item:hover {
+        background: #272727;
+    }
+
+    .related-video-thumbnail {
+        width: 168px;
+        height: 94px;
+        background: #303030;
+        border-radius: 8px;
+        flex-shrink: 0;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .related-video-thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .related-video-info {
+        flex: 1;
+    }
+
+    .related-video-title {
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1.4;
+        margin-bottom: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .related-video-meta {
+        font-size: 12px;
+        color: #aaa;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px;
+        color: #aaa;
+    }
+
+    .error {
+        text-align: center;
+        padding: 40px;
+        color: #f00;
+    }
+
+    /* レスポンシブ */
+    @media (max-width: 1024px) {
+        .video-grid {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s;
+        }
+
+        .sidebar.mobile-open {
+            transform: translateX(0);
+        }
+
+        .main {
+            margin-left: 0;
+        }
+
+        .video-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .related-video-thumbnail {
+            width: 120px;
+            height: 68px;
+        }
+    }
+</style>
+```
+
+</head>
+<body>
+    <!-- ヘッダー -->
+    <div class="header">
+        <div class="logo" onclick="showHome()">
+            <div class="logo-icon">▶</div>
+            <span>動画プレイヤー</span>
+        </div>
+    </div>
+
+```
+<!-- サイドバー -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+        <div class="sidebar-item active" onclick="showHome()">
+            <div class="sidebar-item-icon">🏠</div>
+            ホーム
+        </div>
+    </div>
+    <div class="sidebar-section" id="channelList">
+        <!-- チャンネルリストがここに動的に追加されます -->
+    </div>
+</div>
+
+<!-- メインコンテンツ -->
+<div class="main">
+    <!-- ホーム画面 -->
+    <div id="homeView">
+        <div class="video-grid" id="videoGrid">
+            <div class="loading">読み込み中...</div>
+        </div>
+    </div>
+
+    <!-- 動画再生画面 -->
+    <div id="playerView" class="player-container">
+        <button class="back-button" onclick="showHome()">
+            ← ホームに戻る
+        </button>
+        <div class="video-player">
+            <video id="videoPlayer" class="video-js vjs-big-play-centered" controls preload="auto"></video>
+        </div>
+        <div class="video-details">
+            <div class="video-title" id="currentVideoTitle"></div>
+            <div class="video-meta" id="currentVideoMeta"></div>
+        </div>
+        <div class="related-videos">
+            <h3>関連動画</h3>
+            <div id="relatedVideos"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+<script>
+    let player;
+    let allVideos = [];
+    let displayedVideos = []; // 現在表示されている動画リスト
+    let channels = {};
+
+    // Video.jsプレイヤーの初期化
+    function initPlayer() {
+        player = videojs('videoPlayer', {
+            controls: true,
+            autoplay: false,
+            preload: 'auto',
+            fluid: false,
+            responsive: true
+        });
+    }
+
+    // channels.txtからチャンネルリストを読み込み
+    async function loadChannelList() {
+        try {
+            const response = await fetch('channels.txt');
+            const text = await response.text();
+            const channelNames = text.split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+            
+            for (const channelName of channelNames) {
+                channels[channelName] = `${channelName}.json`;
+            }
+            
+            renderChannelList();
+            loadAllVideos();
+        } catch (error) {
+            console.error('Error loading channel list:', error);
+            document.getElementById('videoGrid').innerHTML = 
+                '<div class="error">チャンネルリストの読み込みに失敗しました</div>';
+        }
+    }
+
+    // サイドバーにチャンネルリストを表示
+    function renderChannelList() {
+        const channelList = document.getElementById('channelList');
+        channelList.innerHTML = '';
+
+        Object.keys(channels).forEach(channelName => {
+            const item = document.createElement('div');
+            item.className = 'sidebar-item';
+            item.innerHTML = `
+                <div class="sidebar-item-icon">#</div>
+                ${channelName}
+            `;
+            item.onclick = () => filterByChannel(channelName);
+            channelList.appendChild(item);
+        });
+    }
+
+    // すべてのチャンネルから動画を読み込み
+    async function loadAllVideos() {
+        allVideos = [];
+        
+        for (const [channelName, jsonPath] of Object.entries(channels)) {
+            try {
+                const response = await fetch(jsonPath);
+                const videos = await response.json();
+                
+                // チャンネル情報を各動画に追加
+                videos.forEach(video => {
+                    video.channelName = channelName;
+                    video.m3u8Url = getM3u8Url(video);
+                });
+                
+                allVideos.push(...videos);
+            } catch (error) {
+                console.error(`Error loading ${channelName}:`, error);
+            }
+        }
+
+        renderVideoGrid(allVideos);
+    }
+
+    // m3u8 URLを取得（複数のフィールドに対応）
+    function getM3u8Url(video) {
+        // チャンネル名/動画ID.m3u8 の構造
+        if (video.content_code && video.channelName) {
+            return `/${video.channelName}/${video.content_code}.m3u8`;
+        }
+        return video.url || video.m3u8 || '';
+    }
+
+    // 動画の長さを秒からHH:MM:SS形式に変換
+    function formatDuration(seconds) {
+        if (!seconds) return '';
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        
+        if (h > 0) {
+            return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+
+    // 日付をフォーマット
+    function formatDate(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffTime = Math.abs(now - date);
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) return '今日';
+        if (diffDays === 1) return '昨日';
+        if (diffDays < 7) return `${diffDays}日前`;
+        if (diffDays < 30) return `${Math.floor(diffDays / 7)}週間前`;
+        if (diffDays < 365) return `${Math.floor(diffDays / 30)}ヶ月前`;
+        return `${Math.floor(diffDays / 365)}年前`;
+    }
+
+    // 視聴回数をフォーマット
+    function formatViews(views) {
+        if (!views) return '0回視聴';
+        if (typeof views === 'number') {
+            return `${views.toLocaleString()}回視聴`;
+        }
+        return `${views}回視聴`;
+    }
+
+    // ビデオグリッドを表示
+    function renderVideoGrid(videos) {
+        const grid = document.getElementById('videoGrid');
+        
+        if (!videos || videos.length === 0) {
+            grid.innerHTML = '<div class="error">動画が見つかりません</div>';
+            displayedVideos = [];
+            return;
+        }
+
+        // 現在表示されている動画リストを更新
+        displayedVideos = videos;
+
+        grid.innerHTML = videos.map((video, index) => `
+            <div class="video-card" onclick='playVideoFromGrid(${index})'>
+                <div class="video-card-thumbnail">
+                    ${video.thumbnail_url ? `<img src="${video.thumbnail_url}" alt="${video.title || ''}">` : ''}
+                    <div class="video-card-duration">${formatDuration(video.active_video_filename?.length)}</div>
+                </div>
+                <div class="video-card-info">
+                    <div class="video-card-title">${video.title || '無題の動画'}</div>
+                    <div class="video-card-channel">${video.channelName || ''}</div>
+                    <div class="video-card-meta">
+                        ${formatViews(video.video_aggregate_info?.total_views)} • ${formatDate(video.display_date || video.released_at)}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // グリッドから動画を再生
+    function playVideoFromGrid(index) {
+        const video = displayedVideos[index];
+        showPlayer();
+        playVideo(video);
+    }
+
+    // 動画を再生
+    function playVideo(video) {
+        // プレイヤーのソースを設定
+        player.src({
+            src: video.m3u8Url,
+            type: 'application/x-mpegURL'
+        });
+
+        // 動画情報を表示
+        document.getElementById('currentVideoTitle').textContent = video.title || '無題の動画';
+        document.getElementById('currentVideoMeta').innerHTML = `
+            <span>${video.channelName}</span>
+            <span>•</span>
+            <span>${formatViews(video.video_aggregate_info?.total_views)}</span>
+            <span>•</span>
+            <span>${formatDate(video.display_date || video.released_at)}</span>
+        `;
+
+        // 関連動画を表示（現在表示されているリストから同じチャンネルの他の動画）
+        const relatedVideos = displayedVideos
+            .filter(v => v.channelName === video.channelName && v.content_code !== video.content_code)
+            .slice(0, 10);
+        
+        renderRelatedVideos(relatedVideos);
+
+        // 再生開始
+        player.play().catch(error => {
+            console.error('Playback error:', error);
+        });
+    }
+
+    // 関連動画を表示
+    function renderRelatedVideos(videos) {
+        const container = document.getElementById('relatedVideos');
+        
+        container.innerHTML = videos.map((video, index) => {
+            const globalIndex = displayedVideos.findIndex(v => v.content_code === video.content_code);
+            return `
+                <div class="related-video-item" onclick='playVideoFromGrid(${globalIndex})'>
+                    <div class="related-video-thumbnail">
+                        ${video.thumbnail_url ? `<img src="${video.thumbnail_url}" alt="${video.title || ''}">` : ''}
+                        <div class="video-card-duration">${formatDuration(video.active_video_filename?.length)}</div>
+                    </div>
+                    <div class="related-video-info">
+                        <div class="related-video-title">${video.title || '無題の動画'}</div>
+                        <div class="related-video-meta">
+                            ${video.channelName}<br>
+                            ${formatViews(video.video_aggregate_info?.total_views)} • ${formatDate(video.display_date || video.released_at)}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // チャンネルでフィルタリング
+    function filterByChannel(channelName) {
+        const filteredVideos = allVideos.filter(v => v.channelName === channelName);
+        renderVideoGrid(filteredVideos);
+        
+        // サイドバーのアクティブ状態を更新
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        event.currentTarget.classList.add('active');
+    }
+
+    // ホーム画面を表示
+    function showHome() {
+        document.getElementById('homeView').style.display = 'block';
+        document.getElementById('playerView').classList.remove('active');
+        renderVideoGrid(allVideos);
+        
+        // サイドバーのホームをアクティブに
+        document.querySelectorAll('.sidebar-item').forEach((item, index) => {
+            item.classList.remove('active');
+            if (index === 0) {
+                item.classList.add('active');
+            }
+        });
+        
+        // プレイヤーを停止
+        if (player) {
+            player.pause();
+        }
+    }
+
+    // プレイヤー画面を表示
+    function showPlayer() {
+        document.getElementById('homeView').style.display = 'none';
+        document.getElementById('playerView').classList.add('active');
+    }
+
+    // 初期化
+    document.addEventListener('DOMContentLoaded', () => {
+        initPlayer();
+        loadChannelList();
+    });
+</script>
+```
+
+</body>
+</html>
